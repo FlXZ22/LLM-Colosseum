@@ -39,49 +39,51 @@ class Game:
             action_b = b.choose_encounter()
             self.resolve_encounter(a, b, action_a, action_b)
     
-    def resolve_encounter(self, a, b, action_a, action_b):
-        def attack(a, b):
-            print(f"{a.name} vs {b.name}")
-            winner = random.choice([a, b])
-            if winner == a:
-                loser = b
-            else:
-                loser = a
-            print(f"{winner.name} wins")
-            loser.health -= 25
-            if loser.health <= 0:
-                loser.health = 0
-                loser.alive = False
-        def possible_location(agent, locations):
-            p_locations = locations.copy()
-            p_locations.remove(agent.position)
-            return p_locations
-        # print agent a and agent b actions
+    def resolve_encounter(self, a, b, action_a, action_b):    
         print(f"{a.name} chooses {action_a}")
         print(f"{b.name} chooses {action_b}")
-        # possible outcome
-        if action_a == "IGNORE" and action_b == "IGNORE":
-            print("Nothing happens")
-        if action_a == "ATTACK" and action_b == "IGNORE":
-            attack(a, b)
-        if action_b == "ATTACK" and action_a == "IGNORE":
-            attack(a, b)
+        
+        match (action_a, action_b):
+            case ("IGNORE", "IGNORE"):
+                print("Nothing happens")
+            case ("ATTACK", "IGNORE"):
+                self._attack(a, b)
+            case ("IGNORE", "ATTACK"):
+                self._attack(a, b)
+            case ("ATTACK", "FLEE" | "HIDE"):
+                print(f"{a.name} tried to attack {b.name}, but he was gone!")
+            case ("FLEE" | "HIDE", "ATTACK"):
+                print(f"{b.name} tried to attack {a.name}, but he was gone!")
+            case (("HIDE", "HIDE") | ("HIDE", "IGNORE") | ("IGNORE", "HIDE")):
+                print("No one saw no one!")
+        
         if action_a == "FLEE":
-            p_locations = possible_location(a, locations)
-            a.position = random.choice(p_locations)
-            print(f"{a.name} escaped to {a.position}")
+            self._flee(a)
         if action_b == "FLEE":
-            p_locations = possible_location(b, locations)
-            b.position = random.choice(p_locations)
-            print(f"{b.name} escaped to {b.position}")
-        if action_a == "ATTACK" and action_b == "ATTACK":
-            attack(a, b)
-            
-                
+            self._flee(b)
+        
+    def _flee(self, agent):
+        dest = random.choice([loc for loc in locations if loc != agent.position])
+        agent.position = dest
+        print(f"{agent.name} escaped to {agent.position}")
+        
+    def _attack(self, a, b):
+        print(f"{a.name} vs {b.name}")
+        winner, loser = (a, b) if a.combat_value() >= b.combat_value() else (b, a)
+        print(f"{winner.name} wins")
+        loser.health -= 25
+        self.validate(a)
+        self.validate(b)
+                    
+                 
     def validate(self, agent):
         agent.hunger = max(agent.hunger, 0)
-        if agent.hunger >= 100 or agent.health <= 0:
+        if agent.hunger >= 100:
             agent.alive = False
+            print(f"{agent.name} has starved to death")
+        elif agent.health <= 0:
+            agent.alive = False
+            print(f"{agent.name} has died due to low health")
             
   
     
