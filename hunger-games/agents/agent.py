@@ -1,47 +1,31 @@
-import random
-
 from engine.world import locations
 
 
 class Agent:
-    def __init__(self, name):
+    def __init__(self, name, rng):
         self.name = name
+        self.rng = rng
         self.health = 100
-        self.strength = random.randint(25, 100)
-        self.speed = random.randint(25, 100)
-        self.stamina = random.randint(25, 100)
-        self.intelligence = random.randint(25, 100)
+        self.strength = self.rng.randint(25, 100)
+        self.speed = self.rng.randint(25, 100)
+        self.stamina = self.rng.randint(25, 100)
+        self.intelligence = self.rng.randint(25, 100)
+        self.stealth = self.rng.randint(25, 100)
         self.hunger = 0
         self.position = "cornucopia"
         self.alive = True
     
     def validate(self):
         self.hunger = max(0, self.hunger)
-        if self.hunger >= 100 or self.health <= 0:
+        if self.hunger >= 100:
             self.alive = False
+            print(f"{self.name} has starved to death")
+        elif self.health <= 0:
+            self.alive = False
+            print(f"{self.name} has died due to low health")
     
-    def choose_action(self):
-        choice = random.choice([
-            "MOVE",
-            "REST",
-            "SEARCH_FOOD"
-        ])
-        if choice == "MOVE":
-            self.position = random.choice(locations)
-        elif choice == "REST":
-            self.health = min(100, self.health + 5)
-        elif choice == "SEARCH_FOOD" and random.random() < 0.5:
-            self.hunger = max(0, self.hunger - 20)
-        self.validate()
-        return choice
-
-    def choose_encounter(self):
-        return random.choice([
-            "ATTACK",
-            "FLEE",
-            "HIDE",
-            "IGNORE"
-        ])
+    def choose_action(self, avalible_actions):
+        return self.rng.choice(avalible_actions)
     
     def combat_value(self):
         value = (self.strength * 0.30) + (self.speed * 0.25) + (self.intelligence * 0.20) + (self.stamina * 0.25)
@@ -55,11 +39,21 @@ class Agent:
             value -= 10 
         elif self.hunger <= 15:
             value += 10
-        # adding randomnality
-        value += random.randint(-10, 10)
+        # adding randomality
+        value += self.rng.randint(-10, 10)
         self.validate()
         return value
     
+    def flee_value(self):
+        # flee_value
+        flee_value = (self.speed * 0.40) + (self.stamina * 0.40) + (self.hunger * 0.20)
+        flee_value += self.rng.randint(-10, 10)
+        return flee_value
+    def hide_value(self):
+        # hide_value
+        hide_value = (self.stealth * 0.40) + (self.intelligence * 0.40) + (self.stamina * 0.20)
+        hide_value += self.rng.randint(-10, 10)
+        return hide_value
     
         
             

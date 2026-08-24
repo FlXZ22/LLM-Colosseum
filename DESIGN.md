@@ -1,0 +1,5 @@
+## Designs
+I have a lot of idea and let me tell you about it:
+- i think we should separate like in a server client way, from this i mean the engine will become the server that will handle every thing and will give us as output a JSONL file that we will use on the client withc will be a proper game with visual, i will design the map and all the little details. AND in the future to enchaced this game we can make the player we someone in the game so it is human vs LLM, but that will come later. and the beuty is that for the client we can use a whole another programming language to handle like visual, we can use a game engine like GODOT or another. so this way the client and server code stay seperated.
+- i want to add like in the future cretures like whitcher and mage. i think it can be pretty cool.
+- for the client side i want to like make and video animation that can be really cool in which we can see all the player come to conucopia, and before that there is me with voice mod that is explaining the history etc.
