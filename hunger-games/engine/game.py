@@ -20,6 +20,7 @@ class Game:
     
     def run_turn(self):
         self.turn_data = {}
+        self.turn_encounters = []
         self.turn += 1
         print(f"\n -- turn {self.turn} --")
         actions = {}
@@ -37,12 +38,10 @@ class Game:
                 f"Hunger : {agent.hunger} |"
                 f"Action : {action} |"
             )
-        
-        encounter_data = self.encounter()
         turn_data = {
             "turn" : self.turn,
             "agents" : [],
-            "encounter" : encounter_data
+            "encounter" : self.turn_encounters
         }
         for agent in self.agents:
             agent_data = {
@@ -71,6 +70,7 @@ class Game:
         legal, reason = is_legal(self, agent, action, target)
         if not legal:
             raise ValueError(reason)
+        # if target it None
         if target == None:
             self.execute_actions(agent, action, None)
         else:
@@ -78,14 +78,12 @@ class Game:
         return action
             
     def execute_actions(self, agent, action, target_name=None):
-        legal, reason = is_legal(self, agent, action, target_name)
-        if not legal:
-            raise ValueError(reason)
-        
         target = None
-        
         if target_name is not None:
             target = next(n for n in self.agents if n.name == target_name)
+        legal, reason = is_legal(self, agent, action, target)
+        if not legal:
+            raise ValueError(reason)
         if action == "REST":
             # Health
             agent.health += 15
@@ -112,14 +110,22 @@ class Game:
         elif action == None:
             print(f"{agent.name} cannot do anything!")
             pass
-        
-    def _hide(self, agent):
-        print(f"{agent.name} is succesfully hidden") 
     
-    def _flee(self, agent): 
-        dest = self.rng.choice([loc for loc in locations if loc != agent.position])
-        agent.position = dest
-        print(f"{agent.name} escaped to {agent.position}")
+    def encounter_data(self, location, agent, target, action, success=None, escaped_to=None):
+        data = {
+            "location" : location,
+            "actor" : agent.name,
+            "target" : target.name,
+            "action" : action,
+            "outcome" : {}
+        }
+        if action == "ATTACK":
+            data["outcome"] = {"winner" : agent.name, "loser": target.name, "damage": 50}
+        elif action == "FLEE":
+            data["outcome"] = {"success" : success, "escaped_to" : escaped_to}
+        elif action == "HIDE":
+            data["outcome"] = {"success" : success}
+        return data
 
     def _attack(self, a, b):
         print(f"{a.name} vs {b.name}")
@@ -128,6 +134,8 @@ class Game:
         loser.health -= 50
         a.validate()
         b.validate()
+        data = self.encounter_data(winner.position, winner, loser, "ATTACK") 
+        self.turn_encounters.append(data)
     
     def convert_jsonl(self, turn_data):
         with open("game_data.jsonl", "a") as file:
@@ -136,16 +144,25 @@ class Game:
         
     def _atemptflee(self, agent, target):
         if agent.flee_value() > target.flee_value():
-            self._flee(agent)
+            position = agent.position
+            dest = self.rng.choice([loc for loc in locations if loc != agent.position])
+            agent.position = dest
+            print(f"{agent.name} escaped to {agent.position}")
+            data = self.encounter_data(position, agent, target, "FLEE", success = True, escaped_to = dest)
+            self.turn_encounters.append(data)
         else:
             print(f"{target.name} caught {agent.name}")
             action = self.choose_action(target)
+            data = self.encounter_data(agent.position, agent, target, "FLEE", success = False)
+            self.turn_encounters.append(data)
 
     def _atempthide(self, agent, target):
         if agent.hide_value() > target.hide_value():
-            self._hide(agent)
+            print(f"{agent.name} is succesfully hidden") 
+            data = self.encounter_data(agent.position, agent, target, "HIDE", success = True)
+            self.turn_encounters.append(data)
         else:
             print(f"{target.name} caught {agent.name}")
             action = self.choose_action(target)
-
-            
+            data = self.encounter_data(agent.position, agent, target, "HIDE", success = False)
+            self.turn_encounters.append(data)
