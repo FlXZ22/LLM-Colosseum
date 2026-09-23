@@ -18,15 +18,18 @@ class Personality:
     traits: dict
     goals: tuple
     fears: tuple
-
+    
+    # this is simply a test case to reduce possible errors
     def __post_init__(self):
         if set(self.traits.keys()) != set(TRAIT_NAMES):
             raise ValueError(f"Traits must exactly match {TRAIT_NAMES}")
         for traits, level in self.traits.items():
             if level not in ALLOWED_LEVELS:
                 raise ValueError(f"Traits level must be in {ALLOWED_LEVELS}")
-
+    
+    # this basically creates a text that the llm can read
     def to_prompt(self):
+        # k stands for key and v stands for value
         traits_line = "\n".join(
             f"{k.capitalize()}: {v}" for k, v in self.traits.items()
         )

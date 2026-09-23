@@ -78,3 +78,19 @@ WEAPON_MODIFIERS = {
     "sharpened spear": 14,
     "old katana": 12,
 }
+
+# memory
+MEMORY_CAP = 12
+# bunus if someone was involved
+SUBJECT_BONUS = 100
+# old memory
+RECENCY_WEIGHT = 2
+# saliance for the memory
+SALIANCE = {
+    "betrayal" : 10,
+    "attack"   : 9,
+    "item"     : 4,
+    "hide"     : 4,
+    "flee"     : 4
+}
+

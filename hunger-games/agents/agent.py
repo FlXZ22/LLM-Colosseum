@@ -20,6 +20,8 @@ class Agent:
         self.hidden = False
         self.controller = Controller(rng)
         self.inventory = []
+        self.memories = []
+        self.memory_seq = 0
 
     def clamp(self):
         self.hunger = max(0, self.hunger)

@@ -7,6 +7,7 @@ from engine.item import Item, add_item, take_item
 from engine.item import best_weapon
 from config import balance
 from agents.perception import observe
+from llm.memory import remember
 
 
 class Game:
@@ -14,8 +15,7 @@ class Game:
         self.seq = 0
         self.events = []
         self.rng = rng
-        self.agents = [Agent(a, rng) for a in names]
-        # turns of the game
+        self.agents = [Agent(a, rng) for a in names] # turns of the game
         self.turn = 0
         self.log_path = log_path
 
@@ -248,6 +248,8 @@ class Game:
         event = {"seq": self.seq, "turn": self.turn, "type": event_type, "data": data}
         self.events.append(event)
         self._append_to_jsonl(event)
+        for agent in self.agents:
+            remember(agent, event)
         return event
 
     def event_per_turn(self, n):

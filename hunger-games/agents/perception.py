@@ -1,6 +1,6 @@
 from engine.world import LOCATIONS
 from engine.actions import get_available_actions, get_available_targets
-
+from llm.memory import recall_text
 
 class Observation:
     def __init__(
@@ -17,6 +17,7 @@ class Observation:
         legal_targets,
         turn,
         inventory,
+        memories
     ):
         self.name = name
         self.position = position
@@ -30,6 +31,7 @@ class Observation:
         self.legal_targets = legal_targets
         self.turn = turn
         self.inventory = inventory
+        self.memories = memories
 
     def to_prompt(self):
         line = []
@@ -48,6 +50,8 @@ class Observation:
             + "."
         )
         line.append("You can: " + ", ".join(self.legal_actions) + ".")
+        if self.memories:
+            line.append("You rememberd " + "; ".join(self.memories) + ".")
         return "\n".join(line)
 
 
@@ -64,6 +68,9 @@ def observe(game, agent):
         "ATTACK": [x.name for x in get_available_targets(game, agent, "ATTACK")],
         "FLEE": [x.name for x in get_available_targets(game, agent, "FLEE")],
     }
+    # memories
+    present = [a.name for a in game.agents if a.alive and a != agent and a.position == agent.position and not a.hidden]
+    memories = recall_text(agent, present, game.turn, k=3)
 
     return Observation(
         name=agent.name,
@@ -78,6 +85,7 @@ def observe(game, agent):
         legal_targets=legal_targets,
         turn=game.turn,
         inventory=[i.name for i in agent.inventory],
+        memories=memories
     )
 
 

@@ -1,6 +1,7 @@
 from llm.personality import Personality
 
-# we have different profiles
+# for v1 we only added 3 PROFILES of personality
+# each on of them has name, background, traits goals and fears
 PROFILES = {
     "aggressor": Personality(
         name="Rocky",
