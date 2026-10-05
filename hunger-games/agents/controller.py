@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import json
 
+# This is currenty the random controller
 class Controller:
     def __init__(self, rng):
         self.rng = rng
@@ -58,7 +59,7 @@ def prompt_builder(personality, perception, memory, legal_actions):
 def parse_intent(legal_actions: dict, llm_responce: str) -> Intent | None:
     start = llm_responce.find("{")
     end = llm_responce.rfind("}")
-    if start == -1 or end == -1 or start < end:
+    if start == -1 or end == -1 or start > end:
         return None
     json_llm = llm_responce[start:end+1]
 
