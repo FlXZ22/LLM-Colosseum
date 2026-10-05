@@ -31,6 +31,7 @@ MEMORY_PROFILES = {
 
 def memory_profile(intelligence):
     if intelligence < 35:
+        # returns a memory_profile obgect
         return MEMORY_PROFILES["very_low"]
     elif intelligence < 50:
         return MEMORY_PROFILES["low"]
