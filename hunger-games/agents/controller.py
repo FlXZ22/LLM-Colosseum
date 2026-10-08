@@ -1,21 +1,39 @@
 from dataclasses import dataclass
 import json
+from llm.request import ask
 
 # This is currenty the random controller
 class Controller:
     def __init__(self, rng):
         self.rng = rng
 
-    def choose_action(self, obs):
+    def random_choose_action(self, obs):
         action = self.rng.choice(obs.legal_actions)
         target = None
         if action in {"ATTACK", "FLEE"}:
             target = self.rng.choice(obs.legal_targets[action])
         return action, target
 
-
-    # flow chart 
-    #
+    def choose_action(self, obs):
+        # the legal_actions should be a dict
+        prompt = prompt_builder(self.personality.to_prompt, ., ., obs.legal_actions)
+        # Only 2 chances
+        for _ in range(2):
+            llm_responce = ask(prompt)
+            intent = parse_intent(legal_actions, llm_responce)
+            if intent is not None:
+                break
+            else:
+                continue
+        if intent is None:
+            return self.random_choose_action(obs)
+        else:
+            action = intent.action
+#       raw_text = intent.raw_responce
+#       reason = intent.reason
+            target = None
+            if action in {"ATTACK", "FLEE"}:
+                target = intent.target
 
 
 @dataclass(frozen=True)
@@ -27,7 +45,7 @@ class Intent:
     reason: str | None = None
 
 
-def prompt_builder(personality, perception, memory, legal_actions):
+def prompt_builder(personality, perception, memory;, legal_actions: dict):
 
     action_lines = []
     for action, target in legal_actions.items():
