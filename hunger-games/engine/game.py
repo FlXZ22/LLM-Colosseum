@@ -8,6 +8,7 @@ from engine.item import best_weapon
 from config import balance
 from agents.perception import observe
 from llm.memory import remember
+from llm.profiles import PROFILES
 
 
 class Game:
@@ -15,7 +16,12 @@ class Game:
         self.seq = 0
         self.events = []
         self.rng = rng
-        self.agents = [Agent(a, rng) for a in names] # turns of the game
+        self.agents = [Agent(a, rng) for a in names]  # turns of the game
+        profiles = list(PROFILES.keys())
+        rng.shuffle(profiles)
+        for index, agent in enumerate(self.agents):
+            agent.profile = PROFILES[profiles[index % len(profiles)]]
+
         self.turn = 0
         self.log_path = log_path
 
@@ -41,7 +47,7 @@ class Game:
         if not obs.legal_actions:
             action, target_name = None, None
         else:
-            action, target_name = agent.controller.choose_action(obs)
+            action, target_name = agent.controller.choose_action(obs, agent)
         target = next((n for n in self.agents if n.name == target_name), None)
         legal, reason = is_legal(self, agent, action, target)
         if not legal:

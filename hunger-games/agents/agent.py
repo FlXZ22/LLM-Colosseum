@@ -22,6 +22,7 @@ class Agent:
         self.inventory = []
         self.memories = []
         self.memory_seq = 0
+        self.profile = None
 
     def clamp(self):
         self.hunger = max(0, self.hunger)

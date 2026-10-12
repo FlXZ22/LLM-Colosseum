@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import json
 from llm.request import ask
 
+
 # This is currenty the random controller
 class Controller:
     def __init__(self, rng):
@@ -14,26 +15,34 @@ class Controller:
             target = self.rng.choice(obs.legal_targets[action])
         return action, target
 
-    def choose_action(self, obs):
-        # the legal_actions should be a dict
-        prompt = prompt_builder(self.personality.to_prompt, ., ., obs.legal_actions)
+    def choose_action(self, obs, agent):
+
+        actions_targets = {
+            action: obs.legal_targets.get(action) for action in obs.legal_actions
+        }
+        # personality, perception, legal_actions
+        prompt = prompt_builder(agent.profile, obs, actions_targets)
+
+        intent = None
         # Only 2 chances
         for _ in range(2):
             llm_responce = ask(prompt)
-            intent = parse_intent(legal_actions, llm_responce)
+            if not llm_responce:
+                continue
+            intent = parse_intent(actions_targets, llm_responce)
             if intent is not None:
                 break
-            else:
-                continue
+
         if intent is None:
             return self.random_choose_action(obs)
         else:
             action = intent.action
-#       raw_text = intent.raw_responce
-#       reason = intent.reason
+            #           raw_text = intent.raw_responce
+            #           reason = intent.reason
             target = None
             if action in {"ATTACK", "FLEE"}:
                 target = intent.target
+            return action, target
 
 
 @dataclass(frozen=True)
@@ -45,7 +54,7 @@ class Intent:
     reason: str | None = None
 
 
-def prompt_builder(personality, perception, memory;, legal_actions: dict):
+def prompt_builder(personality, perception, legal_actions: dict):
 
     action_lines = []
     for action, target in legal_actions.items():
@@ -59,13 +68,10 @@ def prompt_builder(personality, perception, memory;, legal_actions: dict):
     prompt = f"""You are an agent in a survival simulation.
 
     PERSONALITY:
-    {personality}
+    {personality.to_prompt()}
 
     CURRENT SITUATION:
-    {perception}
-
-    MEMORIES:
-    {memory}
+    {perception.to_prompt()}
 
     LEGAL ACTIONS:
     {action_text}
@@ -79,11 +85,16 @@ def prompt_builder(personality, perception, memory;, legal_actions: dict):
 
 
 def parse_intent(legal_actions: dict, llm_responce: str) -> Intent | None:
+
+    # 2nd check
+    if llm_responce is None:
+        return None
+
     start = llm_responce.find("{")
     end = llm_responce.rfind("}")
     if start == -1 or end == -1 or start > end:
         return None
-    json_llm = llm_responce[start:end+1]
+    json_llm = llm_responce[start : end + 1]
 
     try:
         data = json.loads(json_llm)
@@ -98,8 +109,7 @@ def parse_intent(legal_actions: dict, llm_responce: str) -> Intent | None:
     if chosen_action not in legal_actions:
         return None
 
-
-    chosen_target = data.get("target") 
+    chosen_target = data.get("target")
     legal_targets = legal_actions[chosen_action]
 
     if legal_targets is not None:
@@ -108,10 +118,9 @@ def parse_intent(legal_actions: dict, llm_responce: str) -> Intent | None:
     else:
         chosen_target = None
 
-
     return Intent(
-        action = chosen_action,
-        raw_text = llm_responce,
-        target = chosen_target,
-        reason = data.get("reason")
+        action=chosen_action,
+        raw_text=llm_responce,
+        target=chosen_target,
+        reason=data.get("reason"),
     )

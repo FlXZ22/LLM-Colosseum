@@ -2,6 +2,7 @@ import random
 
 from engine.game import Game
 from config import balance
+
 while True:
     raw = input("Give me the seed(default=0): ")
     if raw == "":
@@ -16,6 +17,7 @@ while True:
 log_path = "runs/game_data.jsonl"
 rng = random.Random(seed)
 game = Game(rng, seed, log_path, balance.AGENT_NAMES)
+
 open(log_path, "w").close()
 game.record("SEED", seed=seed)
 while sum(a.alive for a in game.agents) > 1 and game.turn < balance.MAX_TURNS:
