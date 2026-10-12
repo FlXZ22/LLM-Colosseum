@@ -3,9 +3,6 @@ import requests
 import json
 from dotenv import load_dotenv
 
-
-
-
 # load all the local enviorment variable
 load_dotenv()
 
@@ -20,19 +17,34 @@ def ask(prompt):
             headers={
                 "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             },
-            data = json.dumps({
-                # here we have the model
-                "model": "xiaomi/mimo-v2.6-pro",
-                "messages": [
+            data=json.dumps(
                 {
-                    "role": "user",
-                    # the prompt
-                    "content": f"{prompt}"
+                    # here we have the model
+                    "model": "xiaomi/mimo-v2.6-pro",
+                    "messages": [
+                        {
+                            "role": "user",
+                            # the prompt
+                            "content": f"{prompt}",
+                        }
+                    ],
                 }
-            ]
-            })
+            ),
+            timeout=30,
         )
-    except timeout:
-        # One retry
-        pass
 
+        if responce.status_code != 200:
+            return None
+        else:
+            try:
+                message = json.loads(responce.text)
+                return message.get("choices")[0].get("message").get("content")
+            except (IndexError, AttributeError, TypeError, ValueError):
+                return None
+    except requests.RequestException:
+        return None
+
+
+if __name__ == "__main__":
+    responce = ask("Give me a fully valid JSON")
+    print(responce)
