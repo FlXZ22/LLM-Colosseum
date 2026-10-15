@@ -38,7 +38,7 @@ def ask(prompt):
         else:
             try:
                 message = json.loads(responce.text)
-                return message.get("choices")[0].get("message").get("content")
+                return message.get("choices")[0].get("message").get("content"), responce.status_code
             except (IndexError, AttributeError, TypeError, ValueError):
                 return None
     except requests.RequestException:

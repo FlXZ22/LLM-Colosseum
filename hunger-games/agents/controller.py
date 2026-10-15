@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import json
 from llm.request import ask
+from engine.game import record
 
 
 # This is currenty the random controller
@@ -8,12 +9,24 @@ class Controller:
     def __init__(self, rng):
         self.rng = rng
 
-    def random_choose_action(self, obs):
+    def random_choose_action(self, obs, status_code):
         action = self.rng.choice(obs.legal_actions)
         target = None
         if action in {"ATTACK", "FLEE"}:
             target = self.rng.choice(obs.legal_targets[action])
-        return action, target
+        
+        if not status_code:
+            reason = "Network Error."
+            raw_text = "No text came back."
+        elif status_code is not 200:
+            # Error 400, 401
+            reason = "401 bad key or 402 no money."
+            raw_text = "400 error, bad key or no money"
+        elif status_code == 200:
+            reason = "Invalid actions."
+            raw_text = "Bad responce"
+
+        return Intent(action=action, raw_text=raw_text, target=target, reason=reason)
 
     def choose_action(self, obs, agent):
 
@@ -26,7 +39,7 @@ class Controller:
         intent = None
         # Only 2 chances
         for _ in range(2):
-            llm_responce = ask(prompt)
+            llm_responce, status_code = ask(prompt)
             if not llm_responce:
                 continue
             intent = parse_intent(actions_targets, llm_responce)
@@ -34,15 +47,10 @@ class Controller:
                 break
 
         if intent is None:
-            return self.random_choose_action(obs)
+            return self.random_choose_action(obs, status_code)
         else:
-            action = intent.action
-            #           raw_text = intent.raw_responce
-            #           reason = intent.reason
-            target = None
-            if action in {"ATTACK", "FLEE"}:
-                target = intent.target
-            return action, target
+            # we return an Intent object
+            return intent
 
 
 @dataclass(frozen=True)
