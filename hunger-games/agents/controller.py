@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import json
 from llm.request import ask
-from engine.game import record
 
 
 # This is currenty the random controller
@@ -13,20 +12,41 @@ class Controller:
         action = self.rng.choice(obs.legal_actions)
         target = None
         if action in {"ATTACK", "FLEE"}:
-            target = self.rng.choice(obs.legal_targets[action])
+            targets = self.legal_targets.get(action)
+            target = self.rng.choice(targets) if targets else None
         
         if not status_code:
             reason = "Network Error."
             raw_text = "No text came back."
-        elif status_code is not 200:
-            # Error 400, 401
-            reason = "401 bad key or 402 no money."
-            raw_text = "400 error, bad key or no money"
+        elif status_code == 401:
+            reason = "401 Invalid credentials"
+            raw_text = "Invalid credentials: the key is wrong or disabled"
+        elif status_code == 402:
+            reason = "402 Insufficient credits"
+            raw_text = "Insufficient credits: you’re out of money"
+        elif status_code == 403:
+            reason = "403 Forbidden"
+            raw_text = "Forbidden: a moderation or guardrail block"
+        elif status_code == 408:
+            reason = "408 Timeout"
+            raw_text = "Request timed out"
+        elif status_code == 429:
+            reason = "429 Too many requests"
+            raw_text = "Rate limited: too many requests"
+        elif status_code == 502:
+            reason = "502 Server Error"
+            raw_text = "The model is down or gave an invalid response"
+        elif status_code == 503:
+            reason = "503 Server Error"
+            raw_text = "No provider available"
         elif status_code == 200:
-            reason = "Invalid actions."
-            raw_text = "Bad responce"
-
-        return Intent(action=action, raw_text=raw_text, target=target, reason=reason)
+            reason = "Invalid Action"
+            raw_text = "Invalid Action: a bad json response"
+        else:
+            reason = f"{status_code} Error"
+            raw_text = f"Unexpected HTTP {status_code}"
+ 
+        return Intent(action=action, raw_text=raw_text, target=target, reason=reason, is_random=True)
 
     def choose_action(self, obs, agent):
 
@@ -37,9 +57,13 @@ class Controller:
         prompt = prompt_builder(agent.profile, obs, actions_targets)
 
         intent = None
-        # Only 2 chances
+        # default
+        status_code = 200
+        # Only 2 chancesk
         for _ in range(2):
-            llm_responce, status_code = ask(prompt)
+            llm_responce, code = ask(prompt)
+            if code != 200 and status_code == 200:
+                status_code = code
             if not llm_responce:
                 continue
             intent = parse_intent(actions_targets, llm_responce)
@@ -60,6 +84,7 @@ class Intent:
     # Optional and default value
     target: str | None = None
     reason: str | None = None
+    is_random: bool = False
 
 
 def prompt_builder(personality, perception, legal_actions: dict):
@@ -131,4 +156,5 @@ def parse_intent(legal_actions: dict, llm_responce: str) -> Intent | None:
         raw_text=llm_responce,
         target=chosen_target,
         reason=data.get("reason"),
+        is_random=False
     )

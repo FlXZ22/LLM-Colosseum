@@ -54,7 +54,7 @@ class Game:
             action = intent.action
             target_name = intent.target
 
-            self.record("LLM", action=action, target=target_name, raw_text=intent.raw_text, reason=intent.reason)
+            self.record("LLM", action=action, target=target_name, raw_text=intent.raw_text, reason=intent.reason, is_random=intent.is_random)
 
         target = next((n for n in self.agents if n.name == target_name), None)
         legal, reason = is_legal(self, agent, action, target)

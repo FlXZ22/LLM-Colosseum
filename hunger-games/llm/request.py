@@ -32,17 +32,22 @@ def ask(prompt):
             ),
             timeout=30,
         )
-
         if responce.status_code != 200:
-            return None
+            return None, responce.status_code
+        # the network error
         else:
             try:
                 message = json.loads(responce.text)
+                # return message, status_code
                 return message.get("choices")[0].get("message").get("content"), responce.status_code
             except (IndexError, AttributeError, TypeError, ValueError):
-                return None
+                return None, responce.status_code
     except requests.RequestException:
-        return None
+        try:
+            return None, responce.status_code
+        except (UnboundLocalError):
+            return None, None
+ 
 
 
 if __name__ == "__main__":
