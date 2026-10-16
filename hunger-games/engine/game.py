@@ -17,6 +17,7 @@ class Game:
         self.events = []
         self.rng = rng
         self.agents = [Agent(a, rng) for a in names]  # turns of the game
+        # profiles configuration
         profiles = list(PROFILES.keys())
         rng.shuffle(profiles)
         for index, agent in enumerate(self.agents):
@@ -47,7 +48,14 @@ class Game:
         if not obs.legal_actions:
             action, target_name = None, None
         else:
-            action, target_name = agent.controller.choose_action(obs, agent)
+            # we import the class from the controller
+            intent = agent.controller.choose_action(obs, agent)
+
+            action = intent.action
+            target_name = intent.target
+
+            self.record("LLM", action=action, target=target_name, raw_text=intent.raw_text, reason=intent.reason, is_random=intent.is_random)
+
         target = next((n for n in self.agents if n.name == target_name), None)
         legal, reason = is_legal(self, agent, action, target)
         if not legal:

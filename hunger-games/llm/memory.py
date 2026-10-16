@@ -203,14 +203,14 @@ def degrade(memory, fidelity):
     # Level 3 (remember everything)
     if chance >= 8:
         return memory.text
-    # Level 2 (Simply no locaiton)
+    # Level 2 (Simply no location)
     elif chance >= 5:
         text = memory.text
         if " in the " in text:
             text = text.split(" in the ")[0] + "."
         return text
 
-    # Level 1 (Simply no locaiton and name)
+    # Level 1 (Simply no location and name)
     text = memory.text
     if memory.subject and memory.subject in text:
         replacement = "Someone" if text.startswith(memory.subject) else "someone"
