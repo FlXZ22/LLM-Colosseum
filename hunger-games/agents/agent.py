@@ -12,7 +12,8 @@ class Agent:
         self.speed = self.rng.randint(*balance.STAT_RANGE)
         self.max_stamina = self.rng.randint(*balance.STAT_RANGE)
         self.stamina = self.max_stamina
-        self.intelligence = self.rng.randint(*balance.STAT_RANGE)
+        # self.intelligence = self.rng.randint(*balance.STAT_RANGE)
+        self.intelligence = 75
         self.stealth = self.rng.randint(*balance.STAT_RANGE)
         self.hunger = balance.STARTING_HUNGER
         self.position = "cornucopia"

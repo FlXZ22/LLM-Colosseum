@@ -12,16 +12,20 @@ from llm.profiles import PROFILES
 
 
 class Game:
-    def __init__(self, rng, seed, log_path, names):
+    def __init__(self, rng, seed, log_path, names, profiles):
         self.seq = 0
         self.events = []
         self.rng = rng
         self.agents = [Agent(a, rng) for a in names]  # turns of the game
         # profiles configuration
-        profiles = list(PROFILES.keys())
-        rng.shuffle(profiles)
+        # profiles = list(PROFILES.keys())
+        # rng.shuffle(profiles)
+
+        # for index, agent in enumerate(self.agents):
+            # agent.profile = PROFILES[profiles[index % len(profiles)]]
         for index, agent in enumerate(self.agents):
-            agent.profile = PROFILES[profiles[index % len(profiles)]]
+            agent.profile = profiles[index]
+
         self.turn = 0
         self.log_path = log_path
 
