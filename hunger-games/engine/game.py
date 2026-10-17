@@ -22,10 +22,6 @@ class Game:
         rng.shuffle(profiles)
         for index, agent in enumerate(self.agents):
             agent.profile = PROFILES[profiles[index % len(profiles)]]
-<<<<<<< HEAD
-=======
-
->>>>>>> parent of cd8e718 (fix: the name are now the same as profiles)
         self.turn = 0
         self.log_path = log_path
 
