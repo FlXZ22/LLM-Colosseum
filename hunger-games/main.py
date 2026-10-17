@@ -16,7 +16,7 @@ while True:
         continue
 log_path = "runs/game_data.jsonl"
 rng = random.Random(seed)
-game = Game(rng, seed, log_path)
+game = Game(rng, seed, log_path, balance.AGENT_NAMES)
 
 open(log_path, "w").close()
 game.record("SEED", seed=seed)

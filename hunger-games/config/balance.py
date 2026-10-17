@@ -33,6 +33,8 @@ ATTACK_DAMAGE = 50
 
 MAX_TURNS = 200
 
+AGENT_NAMES = ["Agent-A", "Agent-B"]
+
 # Combat_value
 COMBAT_STRENGTH = 0.50
 COMBAT_SPEED = 0.35
