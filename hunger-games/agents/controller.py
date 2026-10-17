@@ -12,7 +12,7 @@ class Controller:
         action = self.rng.choice(obs.legal_actions)
         target = None
         if action in {"ATTACK", "FLEE"}:
-            targets = self.legal_targets.get(action)
+            targets = obs.legal_targets.get(action)
             target = self.rng.choice(targets) if targets else None
         
         if not status_code:
