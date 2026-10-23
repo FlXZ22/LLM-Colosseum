@@ -4,12 +4,19 @@ import json
 from engine.game import Game
 from engine.world import LOCATIONS_NAME
 from config import balance
+from llm.profiles import PROFILES
 
 
 def new_game(seed, log_path="runs/_sweep.jsonl"):
     rng = random.Random(seed)
-    game = Game(rng, seed, log_path, balance.AGENT_NAMES)
-    open(log_path, "w").close()
+    game = Game(
+        rng,
+        seed,
+        log_path,
+        balance.AGENT_NAMES,
+        profiles=[PROFILES["aggressor"], PROFILES["survivalist"]],
+        brains=["random", "random"],
+    )
     game.record("SEED", seed=seed)
     return game
 

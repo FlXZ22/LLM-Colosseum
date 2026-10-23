@@ -30,10 +30,10 @@ while True:
 
 profiles = [PROFILES[PROFILE_CHOICES[p1]], PROFILES[PROFILE_CHOICES[p2]]]
 
-game = Game(rng, seed, log_path, balance.AGENT_NAMES, profiles)
+game = Game(rng, seed, log_path, balance.AGENT_NAMES, profiles, brains = ["random", "random"])
 
-open(log_path, "w").close()
 game.record("SEED", seed=seed)
+
 while sum(a.alive for a in game.agents) > 1 and game.turn < balance.MAX_TURNS:
     game.run_turn()
 

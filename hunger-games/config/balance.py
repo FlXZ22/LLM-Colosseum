@@ -40,6 +40,9 @@ COMBAT_STRENGTH = 0.50
 COMBAT_SPEED = 0.35
 COMBAT_INTELLIGENCE = 0.15
 
+# INTELLIGENCE
+INTELLIGENCE = 75
+
 # Flee_value
 FLEE_SPEED = 0.40
 FLEE_STAMINA = 0.40
@@ -86,11 +89,4 @@ SUBJECT_BONUS = 100
 # old memory
 RECENCY_WEIGHT = 2
 # saliance for the memory
-SALIANCE = {
-    "betrayal" : 10,
-    "attack"   : 9,
-    "item"     : 4,
-    "hide"     : 4,
-    "flee"     : 4
-}
-
+SALIANCE = {"betrayal": 10, "attack": 9, "item": 4, "hide": 4, "flee": 4}
