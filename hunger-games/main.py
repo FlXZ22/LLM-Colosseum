@@ -1,3 +1,5 @@
+import argparse
+from io import StringIO
 import random
 
 from engine.game import Game
@@ -5,34 +7,39 @@ from config import balance
 from llm.profiles import PROFILES
 
 
+parser = argparse.ArgumentParser()
 
-while True:
-    raw = input("Give me the seed(default=0): ")
-    if raw == "":
-        seed = 0
-        break
-    try:
-        seed = int(raw)
-        break
-    except ValueError:
-        print("Please provide a valid seed, it should be an integer!")
-        continue
+parser.add_argument("-s", "--seed", type=int, help="put in the seed you want the game to run.")
+parser.add_argument("-m", "--mode", type=int, help="1: llm, 0: random")
+parser.add_argument("-p", "--personality", type=int, choices=[1, 2, 3], nargs=2)
+args = parser.parse_args()
+
+
+# while True:
+#   raw = input("Give me the seed(default=0): ")
+#   if raw == "":
+#       seed = 0
+#       break
+#   try:
+#       seed = int(raw)
+#       break
+#   except ValueError:
+#       print("Please provide a valid seed, it should be an integer!")
+#       continue
+if args.seed != 0 and not args.seed:
+    raise ValueError("Please input the seed")
+if not args.personality:
+    raise ValueError("Please input the personality [aggressor, survivalist, diplomat]")
+
 log_path = "runs/game_data.jsonl"
-rng = random.Random(seed)
+rng = random.Random(args.seed)
 PROFILE_CHOICES = {"1": "aggressor", "2": "survivalist", "3": "diplomat"}
 
-while True:
-    p1 = input("Give me the 1st agent profile (1: aggressor, 2: survivalist, 3: diplomat): ")
-    p2 = input("Give me the 2nd agent profile (1: aggressor, 2: survivalist, 3: diplomat): ")
-    if p1 in PROFILE_CHOICES and p2 in PROFILE_CHOICES and p1 != p2:
-        break
-    print("Pick two different valid options (1-3).")
+profiles = [PROFILES[PROFILE_CHOICES[str(args.personality[0])]], PROFILES[PROFILE_CHOICES[str(args.personality[1])]]]
 
-profiles = [PROFILES[PROFILE_CHOICES[p1]], PROFILES[PROFILE_CHOICES[p2]]]
+game = Game(rng, args.seed, log_path, balance.AGENT_NAMES, profiles, brains = ["random", "random"] if args.mode == 0 else ["llm", "llm"] )
 
-game = Game(rng, seed, log_path, balance.AGENT_NAMES, profiles, brains = ["random", "random"])
-
-game.record("SEED", seed=seed)
+game.record("SEED", seed=args.seed)
 
 while sum(a.alive for a in game.agents) > 1 and game.turn < balance.MAX_TURNS:
     game.run_turn()
