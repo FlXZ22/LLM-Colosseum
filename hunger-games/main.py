@@ -10,8 +10,9 @@ from llm.profiles import PROFILES
 parser = argparse.ArgumentParser()
 
 parser.add_argument("-s", "--seed", type=int, help="put in the seed you want the game to run.")
-parser.add_argument("-m", "--mode", type=int, help="1: llm, 0: random")
+parser.add_argument("-m", "--mode", type=int, default=0, nargs=2, help="1: llm, 0: random")
 parser.add_argument("-p", "--personality", type=int, choices=[1, 2, 3], nargs=2)
+parser.add_argument("-o", "-output", default="runs/game_data.jsonl")
 args = parser.parse_args()
 
 
@@ -31,13 +32,23 @@ if args.seed != 0 and not args.seed:
 if not args.personality:
     raise ValueError("Please input the personality [aggressor, survivalist, diplomat]")
 
-log_path = "runs/game_data.jsonl"
+log_path = args.output
 rng = random.Random(args.seed)
 PROFILE_CHOICES = {"1": "aggressor", "2": "survivalist", "3": "diplomat"}
 
 profiles = [PROFILES[PROFILE_CHOICES[str(args.personality[0])]], PROFILES[PROFILE_CHOICES[str(args.personality[1])]]]
 
-game = Game(rng, args.seed, log_path, balance.AGENT_NAMES, profiles, brains = ["random", "random"] if args.mode == 0 else ["llm", "llm"] )
+if args.mode == [0, 1]:
+    brains = ["random", "llm"]
+elif args.mode == [1, 0]:
+    brains = ["llm", "random"]
+elif args.mode == [1, 1]:
+    brains = ["llm", "llm"]
+else:
+    brains = ["random", "random"]
+
+
+game = Game(rng, args.seed, log_path, balance.AGENT_NAMES, profiles, brains = brains )
 
 game.record("SEED", seed=args.seed)
 
