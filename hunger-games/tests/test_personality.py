@@ -15,7 +15,6 @@ class TestPersonality(unittest.TestCase):
         p = Personality("Rocky", "Career tribute", TRAITS, ("Win",), ("Defeat",))
         self.assertEqual(p.name, "Rocky")
         prompt = p.to_prompt()
-        self.assertIn("Name: Rocky", prompt)
         self.assertIn("Openness: low", prompt)
         self.assertIn("Goals: Win", prompt)
         self.assertIn("Fears: Defeat", prompt)

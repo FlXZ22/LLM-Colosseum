@@ -39,15 +39,17 @@ def ask(prompt):
             try:
                 message = json.loads(responce.text)
                 # return message, status_code
-                return message.get("choices")[0].get("message").get("content"), responce.status_code
+                return (
+                    message.get("choices")[0].get("message").get("content"),
+                    responce.status_code,
+                )
             except (IndexError, AttributeError, TypeError, ValueError):
                 return None, responce.status_code
     except requests.RequestException:
         try:
             return None, responce.status_code
-        except (UnboundLocalError):
+        except UnboundLocalError:
             return None, None
- 
 
 
 if __name__ == "__main__":

@@ -5,16 +5,17 @@ from llm.request import ask
 
 # This is currenty the random controller
 class Controller:
-    def __init__(self, rng):
+    def __init__(self, rng, brain="llm"):
         self.rng = rng
+        self.brain = brain
 
     def random_choose_action(self, obs, status_code):
         action = self.rng.choice(obs.legal_actions)
         target = None
         if action in {"ATTACK", "FLEE"}:
-            targets = self.legal_targets.get(action)
+            targets = obs.legal_targets.get(action)
             target = self.rng.choice(targets) if targets else None
-        
+
         if not status_code:
             reason = "Network Error."
             raw_text = "No text came back."
@@ -42,13 +43,26 @@ class Controller:
         elif status_code == 200:
             reason = "Invalid Action"
             raw_text = "Invalid Action: a bad json response"
+        elif status_code == "random":
+            reason = "random brain"
+            raw_text = "random brain actions"
         else:
             reason = f"{status_code} Error"
             raw_text = f"Unexpected HTTP {status_code}"
- 
-        return Intent(action=action, raw_text=raw_text, target=target, reason=reason, is_random=True)
+
+        return Intent(
+            action=action,
+            raw_text=raw_text,
+            target=target,
+            reason=reason,
+            is_random=True,
+        )
 
     def choose_action(self, obs, agent):
+        ## this is the line of code for random brain
+
+        if self.brain == "random":
+            return self.random_choose_action(obs, status_code="random")
 
         actions_targets = {
             action: obs.legal_targets.get(action) for action in obs.legal_actions
@@ -156,5 +170,5 @@ def parse_intent(legal_actions: dict, llm_responce: str) -> Intent | None:
         raw_text=llm_responce,
         target=chosen_target,
         reason=data.get("reason"),
-        is_random=False
+        is_random=False,
     )

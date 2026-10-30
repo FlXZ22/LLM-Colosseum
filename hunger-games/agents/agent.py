@@ -4,7 +4,7 @@ from engine.item import weapon_modifier
 
 
 class Agent:
-    def __init__(self, name, rng):
+    def __init__(self, name, rng, brain="llm"):
         self.name = name
         self.rng = rng
         self.health = balance.MAX_HEALTH
@@ -12,13 +12,14 @@ class Agent:
         self.speed = self.rng.randint(*balance.STAT_RANGE)
         self.max_stamina = self.rng.randint(*balance.STAT_RANGE)
         self.stamina = self.max_stamina
-        self.intelligence = self.rng.randint(*balance.STAT_RANGE)
+        # self.intelligence = self.rng.randint(*balance.STAT_RANGE)
+        self.intelligence = balance.INTELLIGENCE
         self.stealth = self.rng.randint(*balance.STAT_RANGE)
         self.hunger = balance.STARTING_HUNGER
         self.position = "cornucopia"
         self.alive = True
         self.hidden = False
-        self.controller = Controller(rng)
+        self.controller = Controller(rng, brain)
         self.inventory = []
         self.memories = []
         self.memory_seq = 0

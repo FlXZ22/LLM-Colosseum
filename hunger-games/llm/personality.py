@@ -37,7 +37,6 @@ class Personality:
         fears_line = ", ".join(self.fears)
 
         return (
-            f"Name: {self.name}\n"
             f"Background: {self.background}\n"
             f"Traits:\n{traits_line}\n"
             f"Goals: {goals_line}\n"
