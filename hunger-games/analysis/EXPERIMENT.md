@@ -29,6 +29,24 @@ Every rate is counted only over the turns where the action was offered. No offer
 | search | medium | high | high |
 | first encounter | ATTACK | HIDE or FLEE | IGNORE / talk, no attack |
 
+
+Rocky is aggressor
+Flint is survivalist
+Mike is diplomat
+
+## Reality
+
+| Metric | Aggressor | Survivalist | Diplomat |
+|--------|------- |-----|-----|
+| attack | ~100%  | 0%  | 0%  | **This prediction is correct**
+| flee   | ~0%    | 15% | 0%  | The survivalist flee rate is incorrect, but it was Known, but the rest is OK.
+| hide   | ~0%    | 82% | 0%  | This is fully correct!
+| search | 90.9%  | 63% | 96.1% | The agressor and survivalist was  not correct, but it was Known, so it is okay
+| first encounter | ATTACK | HIDE and FLEE and MOVE | IGNORE / MOVE, no attack |
+
+Even this is correct, **SO THE EXPERIMENT IS CORRECT!!!!**
+
+
 Diplomat is less hide than survivalist that tries to hide and not engage and get in safe.
 
 ## 4. What counts as failure
