@@ -15,18 +15,6 @@ parser.add_argument("-p", "--personality", type=int, choices=[1, 2, 3], nargs=2)
 parser.add_argument("-o", "-output", default="runs/game_data.jsonl")
 args = parser.parse_args()
 
-
-# while True:
-#   raw = input("Give me the seed(default=0): ")
-#   if raw == "":
-#       seed = 0
-#       break
-#   try:
-#       seed = int(raw)
-#       break
-#   except ValueError:
-#       print("Please provide a valid seed, it should be an integer!")
-#       continue
 if args.seed != 0 and not args.seed:
     raise ValueError("Please input the seed")
 if not args.personality:

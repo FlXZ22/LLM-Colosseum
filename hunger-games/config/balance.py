@@ -90,3 +90,6 @@ SUBJECT_BONUS = 100
 RECENCY_WEIGHT = 2
 # saliance for the memory
 SALIANCE = {"betrayal": 10, "attack": 9, "item": 4, "hide": 4, "flee": 4}
+
+# The BudgetCall limits
+LIMIT = 1000

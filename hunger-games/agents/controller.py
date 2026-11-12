@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 import json
 from llm.request import ask
@@ -19,6 +20,9 @@ class Controller:
         if not status_code:
             reason = "Network Error."
             raw_text = "No text came back."
+        elif status_code == "BudgetCall":
+            reason = "BudgetCall: Limit has been reached"
+            raw_text = "The API limit in BudgetCall has been reached"
         elif status_code == 401:
             reason = "401 Invalid credentials"
             raw_text = "Invalid credentials: the key is wrong or disabled"
@@ -58,7 +62,7 @@ class Controller:
             is_random=True,
         )
 
-    def choose_action(self, obs, agent):
+    def choose_action(self, obs, agent, budget):
         ## this is the line of code for random brain
 
         if self.brain == "random":
@@ -71,20 +75,63 @@ class Controller:
         prompt = prompt_builder(agent.profile, obs, actions_targets)
 
         intent = None
+
         # default
         status_code = 200
+
         # Only 2 chancesk
-        for _ in range(2):
-            llm_responce, code = ask(prompt)
+        for attempt in range(2):
+
+            if budget.take():
+                # function to make the requests to the ai model
+                llm_responce, code = ask(prompt)
+            else:
+                status_code = "BudgetCall"
+                break
+
+            # a set with all the server errors codes 
+            server_error_code = {x for x in range(500, 600)}
+            # we add to the set the code 429: Too many requests
+            server_error_code.add(429)
+            # Invalid api, No credits, Frobidden
+
+            # Network Error
+            if code is None:
+                status_code = None
+                if attempt == 0:
+                    # make the program wait for 1 sec
+                    time.sleep(1)
+                # it should continue only in the first attempt
+                    continue
+                else:
+                    break
+            # these code should NOT continue, but break
+            if code in {400, 401, 402, 403}:
+                status_code = code
+                break
+
+            elif code in server_error_code:
+                status_code = code
+                # first attempt
+                if attempt == 0:
+                    # wait 1000 ms
+                    time.sleep(1)
+                    continue
+                else:
+                    break
+
             if code != 200 and status_code == 200:
                 status_code = code
+
             if not llm_responce:
                 continue
             intent = parse_intent(actions_targets, llm_responce)
+            # if the intent have something 
             if intent is not None:
                 break
 
         if intent is None:
+            # if the intent has nothing we fallback to the random_choose_action()
             return self.random_choose_action(obs, status_code)
         else:
             # we return an Intent object
@@ -99,6 +146,23 @@ class Intent:
     target: str | None = None
     reason: str | None = None
     is_random: bool = False
+
+
+class BudgetCall:
+    def __init__(self, used, limit):
+        self.used = used
+        self.limit = limit
+
+    def take(self):
+        # if the limit is reached
+        if self.used >= self.limit:
+            return False
+        # if there is stil limit available
+        else:
+            self.used += 1
+            return True
+            
+            
 
 
 def prompt_builder(personality, perception, legal_actions: dict):
@@ -137,8 +201,15 @@ def parse_intent(legal_actions: dict, llm_responce: str) -> Intent | None:
     if llm_responce is None:
         return None
 
+    # we only accept str as the input, so no INT
+    # if it's not a string
+    if not isinstance(llm_responce, str):
+        return None
+
     start = llm_responce.find("{")
+    # we use rfint to find the next bracket (next occurences)
     end = llm_responce.rfind("}")
+
     if start == -1 or end == -1 or start > end:
         return None
     json_llm = llm_responce[start : end + 1]

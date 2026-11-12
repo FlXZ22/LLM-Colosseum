@@ -8,7 +8,8 @@ from engine.item import best_weapon
 from config import balance
 from agents.perception import observe
 from llm.memory import remember
-from llm.profiles import PROFILES
+# from llm.profiles import PROFILES
+from agents.controller import BudgetCall
 
 
 class Game:
@@ -39,6 +40,7 @@ class Game:
         open(log_path, "w").close()
 
         self.record("PROFILES", profiles = {a.name : a.profile.name for a in self.agents})
+        self.budget = BudgetCall(0, balance.LIMIT)
 
     def run_turn(self):
         self.turn += 1
@@ -63,7 +65,7 @@ class Game:
             action, target_name = None, None
         else:
             # we import the class from the controller
-            intent = agent.controller.choose_action(obs, agent)
+            intent = agent.controller.choose_action(obs, agent, self.budget)
 
             action = intent.action
             target_name = intent.target
