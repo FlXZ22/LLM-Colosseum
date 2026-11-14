@@ -32,26 +32,40 @@ def ask(prompt):
                     ],
                 }
             ),
+            # we set the timeout of the requests to 30 sec
             timeout=30,
         )
+        # if the responce status_code is different than 200
         if responce.status_code != 200:
-            return None, responce.status_code
+            return f"Error: {responce.status_code}", None, responce.status_code
         # the network error
         else:
             try:
+                # we transform it into json
                 message = json.loads(responce.text)
                 # return message, status_code
+                llm_responce = message.get("choices")[0].get("message").get("content")
+
+                # if none and if empty
+                if llm_responce is None or not llm_responce.strip():
+                    return "NullContent", None, responce.status_code
+
                 return (
-                    message.get("choices")[0].get("message").get("content"),
+                    "Success",
+                    llm_responce,
                     responce.status_code,
                 )
-            except (IndexError, AttributeError, TypeError, ValueError):
-                return None, responce.status_code
+            # expect the massage does not convert (the KeyError is for the choices empty)
+            # the choices does not exist
+            except (IndexError, AttributeError, TypeError, ValueError, KeyError):
+                return "JsonError", None, responce.status_code
+
+    except requests.exceptions.Timeout:
+        return "Timeout", None, None
+    except requests.exceptions.ConnectionError:
+        return "ConnectionError", None, None
     except requests.RequestException:
-        try:
-            return None, responce.status_code
-        except UnboundLocalError:
-            return None, None
+        return "RequestException", None, None
 
 
 if __name__ == "__main__":

@@ -78,6 +78,7 @@ class Game:
                 available_actions=obs.legal_actions,
                 raw_text=intent.raw_text,
                 reason=intent.reason,
+                attempts=intent.attempts,
                 is_random=intent.is_random,
             )
 

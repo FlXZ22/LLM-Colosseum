@@ -1,5 +1,6 @@
+import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 import json
 from llm.request import ask
 
@@ -10,49 +11,88 @@ class Controller:
         self.rng = rng
         self.brain = brain
 
-    def random_choose_action(self, obs, status_code):
+    def random_choose_action(self, obs, status_code, error_type):
         action = self.rng.choice(obs.legal_actions)
         target = None
         if action in {"ATTACK", "FLEE"}:
             targets = obs.legal_targets.get(action)
             target = self.rng.choice(targets) if targets else None
 
-        if not status_code:
-            reason = "Network Error."
-            raw_text = "No text came back."
-        elif status_code == "BudgetCall":
-            reason = "BudgetCall: Limit has been reached"
-            raw_text = "The API limit in BudgetCall has been reached"
-        elif status_code == 401:
-            reason = "401 Invalid credentials"
-            raw_text = "Invalid credentials: the key is wrong or disabled"
-        elif status_code == 402:
-            reason = "402 Insufficient credits"
-            raw_text = "Insufficient credits: you’re out of money"
-        elif status_code == 403:
-            reason = "403 Forbidden"
-            raw_text = "Forbidden: a moderation or guardrail block"
-        elif status_code == 408:
-            reason = "408 Timeout"
-            raw_text = "Request timed out"
-        elif status_code == 429:
-            reason = "429 Too many requests"
-            raw_text = "Rate limited: too many requests"
-        elif status_code == 502:
-            reason = "502 Server Error"
-            raw_text = "The model is down or gave an invalid response"
-        elif status_code == 503:
-            reason = "503 Server Error"
-            raw_text = "No provider available"
-        elif status_code == 200:
-            reason = "Invalid Action"
-            raw_text = "Invalid Action: a bad json response"
-        elif status_code == "random":
-            reason = "random brain"
-            raw_text = "random brain actions"
+        error = {
+            "random": (
+                "Random brain",
+                "Random brain activated"
+            ),
+            "Timeout": (
+                "Timeout of the request",
+                "The request took longer that timeout"
+            ),
+            "ConnectionError": (
+                "Connection error",
+                "The connection failed"
+            ),
+            "BudgetCall": (
+                "Budgetcall reached",
+                "The limit of the Budgetcall reached"
+            ),
+            "RequestException": (
+                "Request erro",
+                "The request had a RequestException error"
+            ),
+            "NullContent": (
+                "The responce is empty/null",
+                "The llm responce is empty/null"
+            ),
+            "JsonError": (
+                "Error parsing json",
+                "Error when parsing json responce"
+            )
+        }
+
+        error_code = {
+            200: (
+                "invalid action",
+                "Invalid json responce"
+            ),
+            401: (
+                "401 Invalid credentials",
+                "Invalid credentials: the key is wrong or disabled"
+            ),
+            402: (
+                "402 Insufficient credits",
+                "Insufficient credits: you’re out of money"
+            ),
+            403: (
+                "403 Forbidden",
+                "Forbidden: a moderation or guardrail block"
+            ),
+            404: (
+                "404 Not found",
+                "Not found, the request was not found"
+            ),
+            429: (
+                "429 Too many requests",
+                "Rate limited: too many requests"
+            ),
+            502: (
+                "502 Server Error",
+                "The model is down or gave an invalid response"
+            ),
+            503: (
+                "Service is unavailible",
+                "The service is termporary unavailble"
+            ),
+        }
+
+        if error_type in error:
+            reason, raw_text = error[error_type]
+        elif status_code in error_code:
+            reason, raw_text = error_code[status_code]
         else:
-            reason = f"{status_code} Error"
-            raw_text = f"Unexpected HTTP {status_code}"
+            reason = f"Error: {status_code}"
+            raw_text = f"Unexpected HTTP status_code: {status_code}, error_type: {error_type}"
+
+
 
         return Intent(
             action=action,
@@ -65,7 +105,7 @@ class Controller:
     def choose_action(self, obs, agent, budget):
         # this is the line of code for random brain
         if self.brain == "random":
-            return self.random_choose_action(obs, status_code="random")
+            return self.random_choose_action(obs, status_code="random", error_type="random")
 
         actions_targets = {
             action: obs.legal_targets.get(action) for action in obs.legal_actions
@@ -74,67 +114,58 @@ class Controller:
         prompt = prompt_builder(agent.profile, obs, actions_targets)
 
         intent = None
-
-        # default
+        error_type = "Success"
         status_code = 200
-
+        # a list of all the errors
+        attempts = []
         # Only 2 chancesk
         for attempt in range(2):
 
             if budget.take():
-                # function to make the requests to the ai model
-                llm_responce, code = ask(prompt)
+                # LLM request using ask()
+                error_type, llm_responce, code = ask(prompt)
+                status_code = code
+                attempts.append({"attempt": attempt + 1, "error_type" : error_type, "status_code": status_code})
             else:
-                status_code = "BudgetCall"
+                error_type = "BudgetCall"
                 break
 
-            # a set with all the server errors codes 
-            server_error_code = {x for x in range(500, 600)}
-            # we add to the set the code 429: Too many requests
-            server_error_code.add(429)
-            # Invalid api, No credits, Frobidden
-
-            # Network Error
-            if code is None:
-                status_code = None
+            if error_type in {"Timeout", "ConnectionError"}:
                 if attempt == 0:
-                    # make the program wait for 1 sec
                     time.sleep(1)
-                # it should continue only in the first attempt
                     continue
                 else:
                     break
+
+            if error_type in {"NullContent", "JsonError"}:
+                continue
+
             # these code should NOT continue, but break
-            if code in {400, 401, 402, 403}:
-                status_code = code
+            if code in {400, 401, 402, 403, 404}:
                 break
 
-            elif code in server_error_code:
-                status_code = code
-                # first attempt
+            elif code in {x for x in range(500, 600)} or code == 429:
                 if attempt == 0:
-                    # wait 1000 ms
                     time.sleep(1)
                     continue
                 else:
                     break
-
-            if code != 200 and status_code == 200:
-                status_code = code
 
             if not llm_responce:
                 continue
+
             intent = parse_intent(actions_targets, llm_responce)
-            # if the intent have something 
-            if intent is not None:
+            # if parse_intent return None this mean that the llm responce was not correct
+            if intent is None:
+                attempts[-1]["error_type"] = "InvalidIntent"
+            else:
                 break
 
         if intent is None:
             # if the intent has nothing we fallback to the random_choose_action()
-            return self.random_choose_action(obs, status_code)
-        else:
-            # we return an Intent object
-            return intent
+            intent = self.random_choose_action(obs, status_code, error_type)
+        # in the intent class replace attempt with this attempt
+        return replace(intent, attempts=attempts)
 
 
 @dataclass(frozen=True)
@@ -144,6 +175,7 @@ class Intent:
     # Optional and default value
     target: str | None = None
     reason: str | None = None
+    attempts: list[dict] = field(default_factory=list)
     is_random: bool = False
 
 
@@ -235,10 +267,13 @@ def parse_intent(legal_actions: dict, llm_responce: str) -> Intent | None:
     else:
         chosen_target = None
 
+    # default list
+    attempts = []
     return Intent(
         action=chosen_action,
         raw_text=llm_responce,
         target=chosen_target,
         reason=data.get("reason"),
+        attempts=attempts,
         is_random=False,
     )
