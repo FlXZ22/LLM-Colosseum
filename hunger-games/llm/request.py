@@ -37,35 +37,40 @@ def ask(prompt):
         )
         # if the responce status_code is different than 200
         if responce.status_code != 200:
-            return f"Error: {responce.status_code}", None, responce.status_code
-        # the network error
+            return f"Error: {responce.status_code}", None, responce.status_code, None
         else:
             try:
+                usage = None
                 # we transform it into json
                 message = json.loads(responce.text)
+
+                if isinstance(message, dict):
+                    usage = message.get("usage")
+
                 # return message, status_code
                 llm_responce = message.get("choices")[0].get("message").get("content")
 
                 # if none and if empty
                 if llm_responce is None or not llm_responce.strip():
-                    return "NullContent", None, responce.status_code
+                    return "NullContent", None, responce.status_code, usage
 
                 return (
                     "Success",
                     llm_responce,
                     responce.status_code,
+                    usage
                 )
             # expect the massage does not convert (the KeyError is for the choices empty)
             # the choices does not exist
             except (IndexError, AttributeError, TypeError, ValueError, KeyError):
-                return "JsonError", None, responce.status_code
+                return "JsonError", None, responce.status_code, usage
 
     except requests.exceptions.Timeout:
-        return "Timeout", None, None
+        return "Timeout", None, None, None
     except requests.exceptions.ConnectionError:
-        return "ConnectionError", None, None
+        return "ConnectionError", None, None, None
     except requests.RequestException:
-        return "RequestException", None, None
+        return "RequestException", None, None, None
 
 
 if __name__ == "__main__":

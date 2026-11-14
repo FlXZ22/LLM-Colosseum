@@ -125,9 +125,11 @@ class Controller:
 
             if budget.take():
                 # LLM request using ask()
-                error_type, llm_responce, code = ask(prompt)
+                error_type, llm_responce, code, usage = ask(prompt)
                 status_code = code
-                attempts.append({"attempt": attempt + 1, "error_type" : error_type, "status_code": status_code})
+                if usage is not None:
+                    budget.usage += usage["total_tokens"]
+                    attempts.append({"attempt": attempt + 1, "error_type" : error_type, "status_code": status_code, "usage": usage})
             else:
                 error_type = "BudgetCall"
                 break
@@ -189,6 +191,7 @@ class BudgetCall:
     def __init__(self, used, limit):
         self.used = used
         self.limit = limit
+        self.usage = 0
 
     def take(self):
         # if the limit is reached
@@ -198,8 +201,6 @@ class BudgetCall:
         else:
             self.used += 1
             return True
-            
-            
 
 
 def prompt_builder(personality, perception, legal_actions: dict):
