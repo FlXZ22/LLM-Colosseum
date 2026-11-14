@@ -93,3 +93,10 @@ SALIANCE = {"betrayal": 10, "attack": 9, "item": 4, "hide": 4, "flee": 4}
 
 # The BudgetCall limits
 LIMIT = 1000
+
+# Requests config
+
+URL = "https://openrouter.ai/api/v1/chat/completions"
+MODEL = "xiaomi/mimo-v2.6-pro"
+
+

@@ -2,6 +2,7 @@ import os
 import requests
 import json
 from dotenv import load_dotenv
+from config import balance
 
 # load all the local enviorment variable
 load_dotenv()
@@ -13,14 +14,15 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 def ask(prompt):
     try:
         responce = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
+            # using requests config in the url
+            url= balance.URL,
             headers={
                 "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             },
             data=json.dumps(
                 {
                     # here we have the model
-                    "model": "xiaomi/mimo-v2.6-pro",
+                    "model": balance.MODEL,
                     "messages": [
                         {
                             "role": "user",

@@ -63,8 +63,7 @@ class Controller:
         )
 
     def choose_action(self, obs, agent, budget):
-        ## this is the line of code for random brain
-
+        # this is the line of code for random brain
         if self.brain == "random":
             return self.random_choose_action(obs, status_code="random")
 
