@@ -103,6 +103,8 @@ class Controller:
         )
 
     def choose_action(self, obs, agent, budget):
+        # start the timer
+        start = time.perf_counter()
         # this is the line of code for random brain
         if self.brain == "random":
             return self.random_choose_action(obs, status_code="random", error_type="random")
@@ -165,7 +167,10 @@ class Controller:
             # if the intent has nothing we fallback to the random_choose_action()
             intent = self.random_choose_action(obs, status_code, error_type)
         # in the intent class replace attempt with this attempt
-        return replace(intent, attempts=attempts)
+        end = time.perf_counter()
+        # latency in ms
+        latency = (end - start) * 1000
+        return replace(intent, attempts=attempts, latency=latency)
 
 
 @dataclass(frozen=True)
@@ -176,6 +181,7 @@ class Intent:
     target: str | None = None
     reason: str | None = None
     attempts: list[dict] = field(default_factory=list)
+    latency: float = 0.0
     is_random: bool = False
 
 
@@ -269,6 +275,7 @@ def parse_intent(legal_actions: dict, llm_responce: str) -> Intent | None:
 
     # default list
     attempts = []
+
     return Intent(
         action=chosen_action,
         raw_text=llm_responce,

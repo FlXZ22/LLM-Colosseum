@@ -79,6 +79,7 @@ class Game:
                 raw_text=intent.raw_text,
                 reason=intent.reason,
                 attempts=intent.attempts,
+                latency=intent.latency,
                 is_random=intent.is_random,
             )
 
